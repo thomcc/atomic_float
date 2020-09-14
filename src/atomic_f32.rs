@@ -1,5 +1,8 @@
-use core::sync::atomic::{AtomicU32, Ordering::{self, *}};
 use core::cell::UnsafeCell;
+use core::sync::atomic::{
+    AtomicU32,
+    Ordering::{self, *},
+};
 
 /// A floating point type which can be safely shared between threads.
 ///
@@ -267,7 +270,11 @@ impl AtomicF32 {
     /// ```
     #[inline]
     pub fn compare_and_swap(&self, current: f32, new: f32, order: Ordering) -> f32 {
-        f32::from_bits(self.as_atomic_bits().compare_and_swap(current.to_bits(), new.to_bits(), order))
+        f32::from_bits(self.as_atomic_bits().compare_and_swap(
+            current.to_bits(),
+            new.to_bits(),
+            order,
+        ))
     }
 
     /// Stores a value into the atomic float if the current value is the bitwise
@@ -320,8 +327,19 @@ impl AtomicF32 {
     /// assert_eq!(v.load(Relaxed), 10.0);
     /// ```
     #[inline]
-    pub fn compare_exchange(&self, current: f32, new: f32, success: Ordering, failure: Ordering) -> Result<f32, f32> {
-        match self.as_atomic_bits().compare_exchange(current.to_bits(), new.to_bits(), success, failure) {
+    pub fn compare_exchange(
+        &self,
+        current: f32,
+        new: f32,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<f32, f32> {
+        match self.as_atomic_bits().compare_exchange(
+            current.to_bits(),
+            new.to_bits(),
+            success,
+            failure,
+        ) {
             Ok(v) => Ok(f32::from_bits(v)),
             Err(v) => Err(f32::from_bits(v)),
         }
@@ -379,8 +397,19 @@ impl AtomicF32 {
     /// }
     /// ```
     #[inline]
-    pub fn compare_exchange_weak(&self, current: f32, new: f32, success: Ordering, failure: Ordering) -> Result<f32, f32> {
-        match self.as_atomic_bits().compare_exchange_weak(current.to_bits(), new.to_bits(), success, failure) {
+    pub fn compare_exchange_weak(
+        &self,
+        current: f32,
+        new: f32,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<f32, f32> {
+        match self.as_atomic_bits().compare_exchange_weak(
+            current.to_bits(),
+            new.to_bits(),
+            success,
+            failure,
+        ) {
             Ok(v) => Ok(f32::from_bits(v)),
             Err(v) => Err(f32::from_bits(v)),
         }
@@ -422,13 +451,20 @@ impl AtomicF32 {
     /// assert_eq!(x.load(SeqCst), 9.0);
     /// ```
     #[inline]
-    pub fn fetch_update<F>(&self, set_order: Ordering, fetch_order: Ordering, mut update: F) -> Result<f32, f32>
+    pub fn fetch_update<F>(
+        &self,
+        set_order: Ordering,
+        fetch_order: Ordering,
+        mut update: F,
+    ) -> Result<f32, f32>
     where
-        F: FnMut(f32) -> Option<f32>
+        F: FnMut(f32) -> Option<f32>,
     {
-        let res = self.as_atomic_bits().fetch_update(set_order, fetch_order, |prev| {
-            update(f32::from_bits(prev)).map(f32::to_bits)
-        });
+        let res = self
+            .as_atomic_bits()
+            .fetch_update(set_order, fetch_order, |prev| {
+                update(f32::from_bits(prev)).map(f32::to_bits)
+            });
         match res {
             Ok(o) => Ok(f32::from_bits(o)),
             Err(e) => Err(f32::from_bits(e)),
@@ -471,13 +507,10 @@ impl AtomicF32 {
     #[inline]
     fn update_with<F>(&self, order: Ordering, mut update: F) -> f32
     where
-        F: FnMut(f32) -> f32
+        F: FnMut(f32) -> f32,
     {
-        self.fetch_update(
-            order,
-            super::fail_order_for(order),
-            |f| Some(update(f))
-        ).unwrap()
+        self.fetch_update(order, super::fail_order_for(order), |f| Some(update(f)))
+            .unwrap()
     }
 
     /// Adds to the current value, returning the previous value.
