@@ -54,7 +54,8 @@ use core::sync::atomic::{
 ///
 /// However, operations like [`fetch_add`](AtomicF64::fetch_add) are
 /// considerably slower than would be the case for integer atomics.
-#[repr(C, align(8))] // XXX Needed for i686? What?
+#[cfg_attr(target_arch = "x86", repr(C, align(8)))]
+#[cfg_attr(not(target_arch = "x86"), repr(transparent))]
 pub struct AtomicF64(UnsafeCell<f64>);
 
 // SAFETY: We only ever access the underlying data by refcasting to AtomicU64,
@@ -64,9 +65,9 @@ unsafe impl Sync for AtomicF64 {}
 
 // Static assertions that the layout is identical, we cite these in a safety
 // comment in `AtomicF64::atom()`.
-const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<UnsafeCell<f64>>()];
+const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<AtomicF64>()];
 const _: [(); 1] =
-    [(); (core::mem::align_of::<UnsafeCell<f64>>() >= core::mem::align_of::<AtomicU64>()) as usize];
+    [(); (core::mem::align_of::<AtomicF64>() >= core::mem::align_of::<AtomicU64>()) as usize];
 
 impl AtomicF64 {
     /// Initialize a `AtomicF64` from an `f64`.
