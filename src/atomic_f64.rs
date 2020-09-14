@@ -52,14 +52,9 @@ use core::sync::atomic::{
 /// `&UnsafeCell<f64>` to an [`&AtomicU64`](core::sync::atomic::AtomicU64) in
 /// order to perform atomic operations.
 ///
-/// This means that we have the same ABI and layout as f64, and that some
-/// operations have a minimal cost (for example: on x86 all operations of
-/// equivalent or weaker ordering than `Release` stores/`Acquire` loads are
-/// essentially equivalent to non-atomic f64).
-///
 /// However, operations like [`fetch_add`](AtomicF64::fetch_add) are
 /// considerably slower than would be the case for integer atomics.
-#[repr(transparent)]
+#[repr(C, align(8))] // XXX Needed for i686? What?
 pub struct AtomicF64(UnsafeCell<f64>);
 
 // SAFETY: We only ever access the underlying data by refcasting to AtomicU64,
@@ -68,11 +63,9 @@ unsafe impl Send for AtomicF64 {}
 unsafe impl Sync for AtomicF64 {}
 
 // Static assertions that the layout is identical, we cite these in a safety
-// comment in `AtomicF64::atom()`. Note that the alignment check is stricter
-// than we need, as it would still be safe if AtomicU64 is less strictly-aligned
-// than our f64. This is unlikely to ever matter, though.
+// comment in `AtomicF64::atom()`.
 const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<UnsafeCell<f64>>()];
-const _: [(); core::mem::align_of::<AtomicU64>()] = [(); core::mem::align_of::<UnsafeCell<f64>>()];
+const _: [(); 1] = [(); (core::mem::align_of::<UnsafeCell<f64>>() >= core::mem::align_of::<AtomicU64>()) as usize];
 
 impl AtomicF64 {
     /// Initialize a `AtomicF64` from an `f64`.
