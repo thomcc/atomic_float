@@ -1,5 +1,8 @@
-use core::sync::atomic::{AtomicU64, Ordering::{self, *}};
 use core::cell::UnsafeCell;
+use core::sync::atomic::{
+    AtomicU64,
+    Ordering::{self, *},
+};
 
 /// A floating point type which can be safely shared between threads.
 ///
@@ -49,14 +52,10 @@ use core::cell::UnsafeCell;
 /// `&UnsafeCell<f64>` to an [`&AtomicU64`](core::sync::atomic::AtomicU64) in
 /// order to perform atomic operations.
 ///
-/// This means that we have the same ABI and layout as f64, and that some
-/// operations have a minimal cost (for example: on x86 all operations of
-/// equivalent or weaker ordering than `Release` stores/`Acquire` loads are
-/// essentially equivalent to non-atomic f64).
-///
 /// However, operations like [`fetch_add`](AtomicF64::fetch_add) are
 /// considerably slower than would be the case for integer atomics.
-#[repr(transparent)]
+#[cfg_attr(target_arch = "x86", repr(C, align(8)))]
+#[cfg_attr(not(target_arch = "x86"), repr(transparent))]
 pub struct AtomicF64(UnsafeCell<f64>);
 
 // SAFETY: We only ever access the underlying data by refcasting to AtomicU64,
@@ -65,11 +64,10 @@ unsafe impl Send for AtomicF64 {}
 unsafe impl Sync for AtomicF64 {}
 
 // Static assertions that the layout is identical, we cite these in a safety
-// comment in `AtomicF64::atom()`. Note that the alignment check is stricter
-// than we need, as it would still be safe if AtomicU64 is less strictly-aligned
-// than our f64. This is unlikely to ever matter, though.
-const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<UnsafeCell<f64>>()];
-const _: [(); core::mem::align_of::<AtomicU64>()] = [(); core::mem::align_of::<UnsafeCell<f64>>()];
+// comment in `AtomicF64::atom()`.
+const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<AtomicF64>()];
+const _: [(); 1] =
+    [(); (core::mem::align_of::<AtomicF64>() >= core::mem::align_of::<AtomicU64>()) as usize];
 
 impl AtomicF64 {
     /// Initialize a `AtomicF64` from an `f64`.
@@ -267,7 +265,11 @@ impl AtomicF64 {
     /// ```
     #[inline]
     pub fn compare_and_swap(&self, current: f64, new: f64, order: Ordering) -> f64 {
-        f64::from_bits(self.as_atomic_bits().compare_and_swap(current.to_bits(), new.to_bits(), order))
+        f64::from_bits(self.as_atomic_bits().compare_and_swap(
+            current.to_bits(),
+            new.to_bits(),
+            order,
+        ))
     }
 
     /// Stores a value into the atomic float if the current value is the bitwise
@@ -320,8 +322,19 @@ impl AtomicF64 {
     /// assert_eq!(v.load(Relaxed), 10.0);
     /// ```
     #[inline]
-    pub fn compare_exchange(&self, current: f64, new: f64, success: Ordering, failure: Ordering) -> Result<f64, f64> {
-        match self.as_atomic_bits().compare_exchange(current.to_bits(), new.to_bits(), success, failure) {
+    pub fn compare_exchange(
+        &self,
+        current: f64,
+        new: f64,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<f64, f64> {
+        match self.as_atomic_bits().compare_exchange(
+            current.to_bits(),
+            new.to_bits(),
+            success,
+            failure,
+        ) {
             Ok(v) => Ok(f64::from_bits(v)),
             Err(v) => Err(f64::from_bits(v)),
         }
@@ -379,8 +392,19 @@ impl AtomicF64 {
     /// }
     /// ```
     #[inline]
-    pub fn compare_exchange_weak(&self, current: f64, new: f64, success: Ordering, failure: Ordering) -> Result<f64, f64> {
-        match self.as_atomic_bits().compare_exchange_weak(current.to_bits(), new.to_bits(), success, failure) {
+    pub fn compare_exchange_weak(
+        &self,
+        current: f64,
+        new: f64,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<f64, f64> {
+        match self.as_atomic_bits().compare_exchange_weak(
+            current.to_bits(),
+            new.to_bits(),
+            success,
+            failure,
+        ) {
             Ok(v) => Ok(f64::from_bits(v)),
             Err(v) => Err(f64::from_bits(v)),
         }
@@ -422,13 +446,20 @@ impl AtomicF64 {
     /// assert_eq!(x.load(SeqCst), 9.0);
     /// ```
     #[inline]
-    pub fn fetch_update<F>(&self, set_order: Ordering, fetch_order: Ordering, mut update: F) -> Result<f64, f64>
+    pub fn fetch_update<F>(
+        &self,
+        set_order: Ordering,
+        fetch_order: Ordering,
+        mut update: F,
+    ) -> Result<f64, f64>
     where
-        F: FnMut(f64) -> Option<f64>
+        F: FnMut(f64) -> Option<f64>,
     {
-        let res = self.as_atomic_bits().fetch_update(set_order, fetch_order, |prev| {
-            update(f64::from_bits(prev)).map(f64::to_bits)
-        });
+        let res = self
+            .as_atomic_bits()
+            .fetch_update(set_order, fetch_order, |prev| {
+                update(f64::from_bits(prev)).map(f64::to_bits)
+            });
         match res {
             Ok(o) => Ok(f64::from_bits(o)),
             Err(e) => Err(f64::from_bits(e)),
@@ -472,13 +503,10 @@ impl AtomicF64 {
     #[inline]
     fn update_with<F>(&self, order: Ordering, mut update: F) -> f64
     where
-        F: FnMut(f64) -> f64
+        F: FnMut(f64) -> f64,
     {
-        self.fetch_update(
-            order,
-            super::fail_order_for(order),
-            |f| Some(update(f))
-        ).unwrap()
+        self.fetch_update(order, super::fail_order_for(order), |f| Some(update(f)))
+            .unwrap()
     }
 
     /// Adds to the current value, returning the previous value.
@@ -540,7 +568,10 @@ impl AtomicF64 {
     /// ```
     #[inline]
     pub fn fetch_abs(&self, order: Ordering) -> f64 {
-        f64::from_bits(self.as_atomic_bits().fetch_and(0x7fff_ffff_ffff_ffff, order))
+        f64::from_bits(
+            self.as_atomic_bits()
+                .fetch_and(0x7fff_ffff_ffff_ffff, order),
+        )
     }
 
     /// Negates the current value, returning the previous value.
@@ -559,7 +590,10 @@ impl AtomicF64 {
     /// ```
     #[inline]
     pub fn fetch_neg(&self, order: Ordering) -> f64 {
-        f64::from_bits(self.as_atomic_bits().fetch_xor(0x8000_0000_0000_0000, order))
+        f64::from_bits(
+            self.as_atomic_bits()
+                .fetch_xor(0x8000_0000_0000_0000, order),
+        )
     }
 
     /// Minimum with the current value.
@@ -657,7 +691,7 @@ impl AtomicF64 {
     /// let v = AtomicF64::new(22.5);
     /// assert_eq!(v.as_atomic_bits().load(Ordering::Relaxed), 22.5f64.to_bits());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn as_atomic_bits(&self) -> &AtomicU64 {
         // Safety: All potentially shared reads/writes go through this, and the
         // static assertions above ensure that AtomicU64 and UnsafeCell<f64> are
@@ -715,4 +749,3 @@ impl From<f64> for AtomicF64 {
         Self::new(f)
     }
 }
-

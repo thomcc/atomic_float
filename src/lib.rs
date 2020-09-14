@@ -2,12 +2,12 @@
 //! implemented on top of `AtomicU32` and `AtomicU64` respectively.
 //!
 //! ```
-//! # use atomic_float::AtomicF64;
+//! # use atomic_float::AtomicF32;
 //! # use std::sync::atomic::Ordering;
-//! static DELTA_TIME: AtomicF64 = AtomicF64::new(1.0);
+//! static DELTA_TIME: AtomicF32 = AtomicF32::new(1.0);
 //!
 //! // In some main simulation loop:
-//! # fn compute_delta_time() -> f64 { 1.0 / 60.0 }
+//! # fn compute_delta_time() -> f32 { 1.0 / 60.0 }
 //! DELTA_TIME.store(compute_delta_time(), Ordering::Release);
 //!
 //! // elsewhere, perhaps on other threads:
@@ -83,21 +83,13 @@ pub use atomic_f32::AtomicF32;
 
 #[cfg(all(
     feature = "atomic_f64",
-    not(any(
-        target_arch = "powerpc",
-        target_arch = "mips",
-        force_disable_atomic64
-    ))
+    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
 ))]
 mod atomic_f64;
 
 #[cfg(all(
     feature = "atomic_f64",
-    not(any(
-        target_arch = "powerpc",
-        target_arch = "mips",
-        force_disable_atomic64
-    ))
+    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
 ))]
 pub use atomic_f64::AtomicF64;
 
@@ -109,17 +101,6 @@ fn fail_order_for(order: Ordering) -> Ordering {
         Ordering::Release | Ordering::Relaxed => Ordering::Relaxed,
         Ordering::Acquire | Ordering::AcqRel => Ordering::Acquire,
         Ordering::SeqCst => Ordering::SeqCst,
-        o => {
-            debug_assert!(
-                false,
-                // in my dreams they'll someday add `Unordered` or `Consume`,
-                // but... doubt it.
-                ":o what could it be (file a bug please): {:?}",
-                o,
-            );
-            // 🤷‍♂️ Would be right for `Consume`, and `Unordered` should never
-            // have RMWs.
-            Ordering::Relaxed
-        }
+        o => o,
     }
 }

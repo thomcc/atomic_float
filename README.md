@@ -1,6 +1,6 @@
 # `atomic_float`
 
-This crate provides `AtomicF32` and `AtomicF64` types that behave almost identically to the ones in the stdlib.
+This crate provides `AtomicF32` and `AtomicF64` types that behave almost identically to the integer atomics in the stdlib.
 
 ## Usage
 
