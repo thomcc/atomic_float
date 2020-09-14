@@ -65,7 +65,8 @@ unsafe impl Sync for AtomicF64 {}
 // Static assertions that the layout is identical, we cite these in a safety
 // comment in `AtomicF64::atom()`.
 const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<UnsafeCell<f64>>()];
-const _: [(); 1] = [(); (core::mem::align_of::<UnsafeCell<f64>>() >= core::mem::align_of::<AtomicU64>()) as usize];
+const _: [(); 1] =
+    [(); (core::mem::align_of::<UnsafeCell<f64>>() >= core::mem::align_of::<AtomicU64>()) as usize];
 
 impl AtomicF64 {
     /// Initialize a `AtomicF64` from an `f64`.
