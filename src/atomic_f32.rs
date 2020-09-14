@@ -685,7 +685,7 @@ impl AtomicF32 {
     /// let v = AtomicF32::new(22.5);
     /// assert_eq!(v.as_atomic_bits().load(Ordering::Relaxed), 22.5f32.to_bits());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn as_atomic_bits(&self) -> &AtomicU32 {
         // Safety: All potentially shared reads/writes go through this, and the
         // static assertions above ensure that AtomicU32 and UnsafeCell<f32> are

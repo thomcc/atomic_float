@@ -101,17 +101,6 @@ fn fail_order_for(order: Ordering) -> Ordering {
         Ordering::Release | Ordering::Relaxed => Ordering::Relaxed,
         Ordering::Acquire | Ordering::AcqRel => Ordering::Acquire,
         Ordering::SeqCst => Ordering::SeqCst,
-        o => {
-            debug_assert!(
-                false,
-                // in my dreams they'll someday add `Unordered` or `Consume`,
-                // but... doubt it.
-                ":o what could it be (file a bug please): {:?}",
-                o,
-            );
-            // 🤷‍♂️ Would be right for `Consume`, and `Unordered` should never
-            // have RMWs.
-            Ordering::Relaxed
-        }
+        o => o,
     }
 }

@@ -691,7 +691,7 @@ impl AtomicF64 {
     /// let v = AtomicF64::new(22.5);
     /// assert_eq!(v.as_atomic_bits().load(Ordering::Relaxed), 22.5f64.to_bits());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn as_atomic_bits(&self) -> &AtomicU64 {
         // Safety: All potentially shared reads/writes go through this, and the
         // static assertions above ensure that AtomicU64 and UnsafeCell<f64> are
