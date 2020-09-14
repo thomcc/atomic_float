@@ -85,6 +85,6 @@ jobs:
       - uses: hecrj/setup-rust-action@v1
       - uses: actions-rs/tarpaulin@v0.1
         with:
-          args: --all-features
+          args: --all-features --doc
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
