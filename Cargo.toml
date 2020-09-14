@@ -1,0 +1,19 @@
+[package]
+name = "atomic_float"
+version = "0.1.0"
+authors = ["Thom Chiovoloni <chiovolonit@gmail.com>"]
+edition = "2018"
+license = "Apache-2.0 OR MIT OR Zlib"
+readme = "README.md"
+description = "Floating point types which can be safely shared between threads"
+keywords = ["atomic", "float", "atomicf32", "atomicf32"]
+categories = ["concurrency", "data-structures", "no-std", "rust-patterns"]
+repository = "https://github.com/thomcc/atomic_float"
+documentation = "https://docs.rs/atomic_float"
+homepage = "https://github.com/thomcc/atomic_float"
+
+[features]
+default = ["atomic_f64"]
+atomic_f64 = []
+
+[dependencies]
