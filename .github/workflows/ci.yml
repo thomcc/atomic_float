@@ -12,6 +12,21 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  dummy_debug_cfg:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: nightly
+      - run: rustc --print=cfg -Ctarget-cpu=native
+      - run: cat /proc/cpuinfo
+        if: matrix.os == 'ubuntu-latest'
+
   test:
     name: Test Rust ${{ matrix.rust }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
