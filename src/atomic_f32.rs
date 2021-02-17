@@ -269,6 +269,7 @@ impl AtomicF32 {
     /// assert_eq!(v.load(Ordering::Relaxed), 10.0);
     /// ```
     #[inline]
+    #[allow(deprecated)]
     pub fn compare_and_swap(&self, current: f32, new: f32, order: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().compare_and_swap(
             current.to_bits(),

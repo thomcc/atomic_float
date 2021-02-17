@@ -264,6 +264,7 @@ impl AtomicF64 {
     /// assert_eq!(v.load(Ordering::Relaxed), 10.0);
     /// ```
     #[inline]
+    #[allow(deprecated)]
     pub fn compare_and_swap(&self, current: f64, new: f64, order: Ordering) -> f64 {
         f64::from_bits(self.as_atomic_bits().compare_and_swap(
             current.to_bits(),
