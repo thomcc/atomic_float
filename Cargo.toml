@@ -17,3 +17,4 @@ default = ["atomic_f64"]
 atomic_f64 = []
 
 [dependencies]
+atomic-traits = { version = "0.3.0", optional = true }
