@@ -81,6 +81,9 @@
 mod atomic_f32;
 pub use atomic_f32::AtomicF32;
 
+#[cfg(feature = "atomic-traits")]
+mod traits_f32;
+
 #[cfg(all(
     feature = "atomic_f64",
     not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
@@ -92,6 +95,13 @@ mod atomic_f64;
     not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
 ))]
 pub use atomic_f64::AtomicF64;
+
+#[cfg(all(
+    feature = "atomic_f64",
+    feature = "atomic-traits",
+    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
+))]
+mod traits_f64;
 
 use core::sync::atomic::Ordering;
 
