@@ -744,3 +744,33 @@ impl From<f32> for AtomicF32 {
         Self::new(f)
     }
 }
+
+#[cfg(feature = "serde")]
+/// Serializes the AtomicF32
+///
+/// The value is loaded with the `Ordering::SeqCst` and then serializes
+/// it as a normal `f32`. The information about the object being atomic is lost.
+impl serde::Serialize for AtomicF32 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_f32(self.load(Ordering::SeqCst))
+    }
+}
+
+#[cfg(feature = "serde")]
+/// Deserializes the AtomicF32
+///
+/// Attempts to deserialize f32 and, if successful, creates a new
+/// AtomicF32 with this value.
+impl<'de> serde::Deserialize<'de> for AtomicF32 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = f32::deserialize(deserializer)?;
+
+        Ok(AtomicF32::new(value))
+    }
+}

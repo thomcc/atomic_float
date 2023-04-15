@@ -17,3 +17,4 @@ default = ["atomic_f64"]
 atomic_f64 = []
 
 [dependencies]
+serde = { version = "1", optional = true }
