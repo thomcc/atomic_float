@@ -750,3 +750,33 @@ impl From<f64> for AtomicF64 {
         Self::new(f)
     }
 }
+
+#[cfg(feature = "serde")]
+/// Serializes the AtomicF64
+///
+/// The value is loaded with the `Ordering::SeqCst` and then serializes
+/// it as a normal `f64`. The information about the object being atomic is lost.
+impl serde::Serialize for AtomicF64 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_f64(self.load(Ordering::SeqCst))
+    }
+}
+
+#[cfg(feature = "serde")]
+/// Deserializes the AtomicF64
+///
+/// Attempts to deserialize f64 and, if successful, creates a new
+/// AtomicF64 with this value.
+impl<'de> serde::Deserialize<'de> for AtomicF64 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = f64::deserialize(deserializer)?;
+
+        Ok(AtomicF64::new(value))
+    }
+}
