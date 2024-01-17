@@ -223,6 +223,7 @@ impl AtomicF32 {
     /// assert_eq!(v.load(Ordering::Relaxed), 100.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic= "32")]
     pub fn swap(&self, new_value: f32, ordering: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().swap(new_value.to_bits(), ordering))
     }
@@ -270,6 +271,7 @@ impl AtomicF32 {
     /// ```
     #[inline]
     #[allow(deprecated)]
+    #[cfg(target_has_atomic = "32")]
     pub fn compare_and_swap(&self, current: f32, new: f32, order: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().compare_and_swap(
             current.to_bits(),
@@ -328,6 +330,7 @@ impl AtomicF32 {
     /// assert_eq!(v.load(Relaxed), 10.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn compare_exchange(
         &self,
         current: f32,
@@ -398,6 +401,7 @@ impl AtomicF32 {
     /// }
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn compare_exchange_weak(
         &self,
         current: f32,
@@ -452,6 +456,7 @@ impl AtomicF32 {
     /// assert_eq!(x.load(SeqCst), 9.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_update<F>(
         &self,
         set_order: Ordering,
@@ -506,6 +511,7 @@ impl AtomicF32 {
     /// # };
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     fn update_with<F>(&self, order: Ordering, mut update: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -530,6 +536,7 @@ impl AtomicF32 {
     /// assert_eq!(x.fetch_add(-100.0, AcqRel), 10.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_add(&self, val: f32, order: Ordering) -> f32 {
         self.update_with(order, |f| f + val)
     }
@@ -552,6 +559,7 @@ impl AtomicF32 {
     /// assert_eq!(x.fetch_sub(0.5, AcqRel), 6.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_sub(&self, val: f32, order: Ordering) -> f32 {
         self.update_with(order, |f| f - val)
     }
@@ -568,6 +576,7 @@ impl AtomicF32 {
     /// assert_eq!(x.fetch_abs(SeqCst), 7.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_abs(&self, order: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().fetch_and(0x7fff_ffff, order))
     }
@@ -588,6 +597,7 @@ impl AtomicF32 {
     /// assert_eq!(x.fetch_neg(AcqRel), -7.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_neg(&self, order: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().fetch_xor(0x8000_0000, order))
     }
@@ -616,6 +626,7 @@ impl AtomicF32 {
     /// assert_eq!(foo.load(Ordering::Relaxed), 22.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_min(&self, value: f32, order: Ordering) -> f32 {
         self.update_with(order, |f| f.min(value))
     }
@@ -645,6 +656,7 @@ impl AtomicF32 {
     /// assert_eq!(foo.load(Ordering::Relaxed), 42.0);
     /// ```
     #[inline]
+    #[cfg(target_has_atomic = "32")]
     pub fn fetch_max(&self, value: f32, order: Ordering) -> f32 {
         self.update_with(order, |f| f.max(value))
     }
