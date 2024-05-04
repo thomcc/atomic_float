@@ -2,7 +2,7 @@
 name = "atomic_float"
 version = "0.1.0"
 authors = ["Thom Chiovoloni <chiovolonit@gmail.com>"]
-edition = "2018"
+edition = "2021"
 rust-version = "1.60.0"
 license = "Apache-2.0 OR MIT OR Zlib"
 readme = "README.md"
