@@ -84,6 +84,5 @@ jobs:
       options: --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v3
-      - run: cargo tarpaulin --version
-      - run: cargo +nightly tarpaulin --verbose --doc --all-features --all-targets --out xml
+      - run: cargo tarpaulin --verbose --doc --all-features --all-targets --engine llvm --out xml
       - uses: codecov/codecov-action@v4
