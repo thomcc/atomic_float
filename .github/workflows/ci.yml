@@ -84,8 +84,5 @@ jobs:
       options: --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v4
-      # - uses: dtolnay/rust-toolchain@nightly
-      # - run: cargo install cargo-tarpaulin
-      # - run: cargo tarpaulin --version
       - run: cargo tarpaulin --verbose --doc --all-features --all-targets --engine llvm --out xml
       - uses: codecov/codecov-action@v4
