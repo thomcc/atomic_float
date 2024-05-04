@@ -29,8 +29,8 @@ assert_eq!(A_STATIC.load(Relaxed), -885.0);
 
 Licensed under either of
 
-- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-- ZLIB license ([LICENSE-ZLIB](LICENSE-ZLIB) or http://opensource.org/licenses/ZLIB)
+- Apache License, Version 2.0, ([LICENSE-APACHE](./LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](./LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Public domain, as explained by the Unlicense ([UNLICENSE](./UNLICENSE) or http://opensource.org/licenses/Unlicense)
 
 at your option.
