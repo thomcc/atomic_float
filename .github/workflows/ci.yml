@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: '0 0 * * *'
 
 env:
   RUST_BACKTRACE: 1
@@ -27,8 +25,8 @@ jobs:
           - { rust: beta,             os: ubuntu-latest }
           - { rust: nightly,          os: ubuntu-latest }
     steps:
-      - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v3
+      - uses: hecrj/setup-rust-action@v2
         with:
           rust-version: ${{ matrix.rust }}
       - run: cargo test --verbose --workspace --all-features
@@ -47,12 +45,12 @@ jobs:
         target:
           - i686-unknown-linux-gnu
           - armv7-linux-androideabi
-          - aarch64-linux-android
-          - mips-unknown-linux-gnu
-          - mips64-unknown-linux-gnuabi64
+          - aarch64-unknown-linux-gnu
+          - powerpc-unknown-linux-gnu
+          - powerpc64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v3
+      - uses: hecrj/setup-rust-action@v2
       - run: cargo install cross
       - run: cross test --verbose --target=${{ matrix.target }} --no-default-features
       - run: cross test --verbose --target=${{ matrix.target }} --all-features
@@ -63,8 +61,8 @@ jobs:
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v3
+      - uses: hecrj/setup-rust-action@v2
       - run: cargo check --workspace --all-targets --verbose
       - run: cargo check --workspace --all-targets --verbose --no-default-features
 
@@ -72,21 +70,20 @@ jobs:
     name: Verify code formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v3
+      - uses: hecrj/setup-rust-action@v2
         with:
           components: rustfmt
       - run: cargo fmt --all -- --check
+
   codecov-tarpaulin:
-    name: Generate code coverage
+    name: coverage
     runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
     steps:
-      - uses: actions/checkout@v2
-      - uses: hecrj/setup-rust-action@v1
-        with:
-          rust-version: nightly
-      - uses: actions-rs/tarpaulin@v0.1
-        with:
-          args: --all-features --doc
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1
+      - uses: actions/checkout@v3
+      - run: cargo +nightly tarpaulin --verbose --doc --all-features --workspace --timeout 120 --out xml
+      - uses: codecov/codecov-action@v4
+        with: { fail_ci_if_error: true }
