@@ -16,3 +16,21 @@ fn readme_test() {
 
     assert_eq!(A_STATIC.load(Relaxed), -885.0);
 }
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_f32() {
+    serde_test::assert_tokens(
+        &atomic_float::AtomicF32::new(1.0),
+        &[serde_test::Token::F32(1.0)],
+    );
+}
+
+#[cfg(all(feature = "serde", feature = "atomic_f64"))]
+#[test]
+fn test_serde_f64() {
+    serde_test::assert_tokens(
+        &atomic_float::AtomicF64::new(1.0),
+        &[serde_test::Token::F64(1.0)],
+    );
+}

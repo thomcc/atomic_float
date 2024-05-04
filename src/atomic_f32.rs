@@ -60,7 +60,11 @@ use core::sync::atomic::{
 /// However, operations like [`fetch_add`](AtomicF32::fetch_add) are
 /// considerably slower than would be the case for integer atomics.
 #[repr(transparent)]
-pub struct AtomicF32(UnsafeCell<f32>);
+pub struct AtomicF32(
+    // FIXME: Once we can do `f32::from_bits` in const fn, this should be an
+    // `AtomicU32` (or at least `UnsafeCell<u32>`).
+    UnsafeCell<f32>,
+);
 
 // SAFETY: We only ever access the underlying data by refcasting to AtomicU32,
 // which guarantees no data races.
@@ -69,8 +73,8 @@ unsafe impl Sync for AtomicF32 {}
 
 // Static assertions that the layout is identical, we cite these in a safety
 // comment in `AtomicF32::atom()`. Note that the alignment check is stricter
-// than we need, as it would still be safe if AtomicU32 is less strictly-aligned
-// than our f32. This is unlikely to ever matter, though.
+// than we need, as it would still be safe if `AtomicU32` is less strictly-
+// aligned than our `f32`. Unlike with `AtomicF64`, this is unlikely to occur.
 const _: [(); core::mem::size_of::<AtomicU32>()] = [(); core::mem::size_of::<UnsafeCell<f32>>()];
 const _: [(); core::mem::align_of::<AtomicU32>()] = [(); core::mem::align_of::<UnsafeCell<f32>>()];
 
@@ -223,7 +227,7 @@ impl AtomicF32 {
     /// assert_eq!(v.load(Ordering::Relaxed), 100.0);
     /// ```
     #[inline]
-    #[cfg(target_has_atomic= "32")]
+    #[cfg(target_has_atomic = "32")]
     pub fn swap(&self, new_value: f32, ordering: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().swap(new_value.to_bits(), ordering))
     }
@@ -338,15 +342,12 @@ impl AtomicF32 {
         success: Ordering,
         failure: Ordering,
     ) -> Result<f32, f32> {
-        match self.as_atomic_bits().compare_exchange(
+        convert_result(self.as_atomic_bits().compare_exchange(
             current.to_bits(),
             new.to_bits(),
             success,
             failure,
-        ) {
-            Ok(v) => Ok(f32::from_bits(v)),
-            Err(v) => Err(f32::from_bits(v)),
-        }
+        ))
     }
 
     /// Stores a value into the atomic integer if the current value is the same
@@ -409,15 +410,12 @@ impl AtomicF32 {
         success: Ordering,
         failure: Ordering,
     ) -> Result<f32, f32> {
-        match self.as_atomic_bits().compare_exchange_weak(
+        convert_result(self.as_atomic_bits().compare_exchange_weak(
             current.to_bits(),
             new.to_bits(),
             success,
             failure,
-        ) {
-            Ok(v) => Ok(f32::from_bits(v)),
-            Err(v) => Err(f32::from_bits(v)),
-        }
+        ))
     }
 
     /// Fetches the value, and applies a function to it that returns an optional
@@ -471,11 +469,9 @@ impl AtomicF32 {
             .fetch_update(set_order, fetch_order, |prev| {
                 update(f32::from_bits(prev)).map(f32::to_bits)
             });
-        match res {
-            Ok(o) => Ok(f32::from_bits(o)),
-            Err(e) => Err(f32::from_bits(e)),
-        }
+        convert_result(res)
     }
+
     /// A (nonstandard) convenience wrapper around [`fetch_update`](Self::fetch_update).
     ///
     /// A call like:
@@ -601,6 +597,7 @@ impl AtomicF32 {
     pub fn fetch_neg(&self, order: Ordering) -> f32 {
         f32::from_bits(self.as_atomic_bits().fetch_xor(0x8000_0000, order))
     }
+
     /// Minimum with the current value.
     ///
     /// Finds the minimum of the current value and the argument `val`, and sets
@@ -781,8 +778,42 @@ impl<'de> serde::Deserialize<'de> for AtomicF32 {
     where
         D: serde::Deserializer<'de>,
     {
-        let value = f32::deserialize(deserializer)?;
+        f32::deserialize(deserializer).map(AtomicF32::new)
+    }
+}
 
-        Ok(AtomicF32::new(value))
+#[inline(always)]
+fn convert_result(r: Result<u32, u32>) -> Result<f32, f32> {
+    r.map(f32::from_bits).map_err(f32::from_bits)
+}
+
+// XXX: This is dubious since the actual atomic types don't implement this, but
+// I need it to use `serde_test`, so I might as well add it.
+/// Compare two [`AtomicF32`]s.
+///
+/// ```
+/// # use atomic_float::AtomicF32;
+/// # use std::sync::atomic::Ordering;
+/// let a = AtomicF32::new(1.0);
+/// a.fetch_add(1.0, Ordering::Relaxed);
+/// assert_ne!(a, AtomicF32::new(1.0));
+/// assert_eq!(a, AtomicF32::new(2.0));
+/// ```
+///
+/// # Caveats
+/// Relaxed ordering is used for each load, so additional fencing (or avoiding
+/// the use of this `PartialEq` implementation) may be desirable.
+///
+/// Additionally, this is implemented in terms of `f32`'s `PartialEq`, so NaNs
+/// will compare as inequal. For example:
+/// ```
+/// # use atomic_float::AtomicF32;
+/// let a = AtomicF32::new(f32::NAN);
+/// assert_ne!(a, a);
+/// ```
+impl PartialEq for AtomicF32 {
+    #[inline]
+    fn eq(&self, o: &AtomicF32) -> bool {
+        self.load(Relaxed) == o.load(Relaxed)
     }
 }
