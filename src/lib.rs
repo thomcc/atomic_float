@@ -101,6 +101,6 @@ fn fail_order_for(order: Ordering) -> Ordering {
         Ordering::Release | Ordering::Relaxed => Ordering::Relaxed,
         Ordering::Acquire | Ordering::AcqRel => Ordering::Acquire,
         Ordering::SeqCst => Ordering::SeqCst,
-        o => o,
+        o => unreachable!("Unknown ordering: {:?} (file a bug with atomic_float)", o),
     }
 }

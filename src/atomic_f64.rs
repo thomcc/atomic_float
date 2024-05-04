@@ -56,7 +56,11 @@ use core::sync::atomic::{
 /// considerably slower than would be the case for integer atomics.
 #[cfg_attr(target_arch = "x86", repr(C, align(8)))]
 #[cfg_attr(not(target_arch = "x86"), repr(transparent))]
-pub struct AtomicF64(UnsafeCell<f64>);
+pub struct AtomicF64(
+    // FIXME: Once we can do `f32::from_bits` in const fn, this should be an
+    // `AtomicU64` (or at least `UnsafeCell<u64>`).
+    UnsafeCell<f64>,
+);
 
 // SAFETY: We only ever access the underlying data by refcasting to AtomicU64,
 // which guarantees no data races.
@@ -64,7 +68,9 @@ unsafe impl Send for AtomicF64 {}
 unsafe impl Sync for AtomicF64 {}
 
 // Static assertions that the layout is identical, we cite these in a safety
-// comment in `AtomicF64::atom()`.
+// comment in `AtomicF64::atom()`. This is possible on some targets (like 32-bit
+// x86, which has different alignments for `AtomicU64` and `u64` for example),
+// so please file a bug for your target if you hit these.
 const _: [(); core::mem::size_of::<AtomicU64>()] = [(); core::mem::size_of::<AtomicF64>()];
 const _: [(); 1] =
     [(); (core::mem::align_of::<AtomicF64>() >= core::mem::align_of::<AtomicU64>()) as usize];
@@ -330,15 +336,12 @@ impl AtomicF64 {
         success: Ordering,
         failure: Ordering,
     ) -> Result<f64, f64> {
-        match self.as_atomic_bits().compare_exchange(
+        convert_result(self.as_atomic_bits().compare_exchange(
             current.to_bits(),
             new.to_bits(),
             success,
             failure,
-        ) {
-            Ok(v) => Ok(f64::from_bits(v)),
-            Err(v) => Err(f64::from_bits(v)),
-        }
+        ))
     }
 
     /// Stores a value into the atomic integer if the current value is the same
@@ -400,15 +403,12 @@ impl AtomicF64 {
         success: Ordering,
         failure: Ordering,
     ) -> Result<f64, f64> {
-        match self.as_atomic_bits().compare_exchange_weak(
+        convert_result(self.as_atomic_bits().compare_exchange_weak(
             current.to_bits(),
             new.to_bits(),
             success,
             failure,
-        ) {
-            Ok(v) => Ok(f64::from_bits(v)),
-            Err(v) => Err(f64::from_bits(v)),
-        }
+        ))
     }
 
     /// Fetches the value, and applies a function to it that returns an optional
@@ -461,10 +461,7 @@ impl AtomicF64 {
             .fetch_update(set_order, fetch_order, |prev| {
                 update(f64::from_bits(prev)).map(f64::to_bits)
             });
-        match res {
-            Ok(o) => Ok(f64::from_bits(o)),
-            Err(e) => Err(f64::from_bits(e)),
-        }
+        convert_result(res)
     }
     // Not exposing this unless I can come up with a better name...
     /// A (nonstandard) convenience wrapper around [`fetch_update`](Self::fetch_update).
@@ -775,8 +772,42 @@ impl<'de> serde::Deserialize<'de> for AtomicF64 {
     where
         D: serde::Deserializer<'de>,
     {
-        let value = f64::deserialize(deserializer)?;
+        f64::deserialize(deserializer).map(AtomicF64::new)
+    }
+}
 
-        Ok(AtomicF64::new(value))
+#[inline(always)]
+fn convert_result(r: Result<u64, u64>) -> Result<f64, f64> {
+    r.map(f64::from_bits).map_err(f64::from_bits)
+}
+
+// XXX: This is dubious since the actual atomic types don't implement this, but
+// I need it to use `serde_test`, so I might as well add it.
+/// Compare two [`AtomicF64`]s.
+///
+/// ```
+/// # use atomic_float::AtomicF64;
+/// # use std::sync::atomic::Ordering;
+/// let a = AtomicF64::new(1.0);
+/// a.fetch_add(1.0, Ordering::Relaxed);
+/// assert_ne!(a, AtomicF64::new(1.0));
+/// assert_eq!(a, AtomicF64::new(2.0));
+/// ```
+///
+/// # Caveats
+/// Relaxed ordering is used for each load, so additional fencing (or avoiding
+/// the use of this `PartialEq` implementation) may be desirable.
+///
+/// Additionally, this is implemented in terms of `f64`'s `PartialEq`, so NaNs
+/// will compare as inequal. For example:
+/// ```
+/// # use atomic_float::AtomicF64;
+/// let a = AtomicF64::new(f64::NAN);
+/// assert_ne!(a, a);
+/// ```
+impl PartialEq for AtomicF64 {
+    #[inline]
+    fn eq(&self, o: &AtomicF64) -> bool {
+        self.load(Relaxed) == o.load(Relaxed)
     }
 }
