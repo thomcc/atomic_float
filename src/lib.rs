@@ -83,13 +83,15 @@ pub use atomic_f32::AtomicF32;
 
 #[cfg(all(
     feature = "atomic_f64",
-    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
+    target_has_atomic = "64",
+    not(force_disable_atomic64),
 ))]
 mod atomic_f64;
 
 #[cfg(all(
     feature = "atomic_f64",
-    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
+    target_has_atomic = "64",
+    not(force_disable_atomic64),
 ))]
 pub use atomic_f64::AtomicF64;
 

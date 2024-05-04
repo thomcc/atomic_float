@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: 1.46.0,           os: ubuntu-latest }
+          - { rust: 1.60.0,           os: ubuntu-latest }
           - { rust: stable,           os: ubuntu-latest }
           - { rust: stable,           os: macos-latest }
           - { rust: stable,           os: windows-latest }
@@ -85,5 +85,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: cargo +nightly tarpaulin --verbose --doc --all-features --workspace --timeout 120 --out xml
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v2
         with: { fail_ci_if_error: true }
