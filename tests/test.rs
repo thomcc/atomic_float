@@ -27,10 +27,11 @@ fn test_serde_f32() {
 }
 
 #[cfg(all(
+    feature = "serde",
     feature = "atomic_f64",
-    not(any(target_arch = "powerpc", target_arch = "mips", force_disable_atomic64))
+    target_has_atomic = "64",
+    not(force_disable_atomic64),
 ))]
-#[cfg(feature = "serde")]
 #[test]
 fn test_serde_f64() {
     serde_test::assert_tokens(
