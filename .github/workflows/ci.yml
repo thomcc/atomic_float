@@ -85,4 +85,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: cargo tarpaulin --verbose --doc --all-features --all-targets --engine llvm --out xml
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v3
