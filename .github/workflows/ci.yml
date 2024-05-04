@@ -25,7 +25,7 @@ jobs:
           - { rust: beta,             os: ubuntu-latest }
           - { rust: nightly,          os: ubuntu-latest }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hecrj/setup-rust-action@v2
         with:
           rust-version: ${{ matrix.rust }}
@@ -49,7 +49,7 @@ jobs:
           - powerpc-unknown-linux-gnu
           - powerpc64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hecrj/setup-rust-action@v2
       - run: cargo install cross
       - run: cross test --verbose --target=${{ matrix.target }} --no-default-features
@@ -61,7 +61,7 @@ jobs:
     env:
       RUSTFLAGS: -Dwarnings
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hecrj/setup-rust-action@v2
       - run: cargo check --workspace --all-targets --verbose
       - run: cargo check --workspace --all-targets --verbose --no-default-features
@@ -70,7 +70,7 @@ jobs:
     name: Verify code formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: hecrj/setup-rust-action@v2
         with:
           components: rustfmt
@@ -83,6 +83,6 @@ jobs:
       image: xd009642/tarpaulin:develop-nightly
       options: --security-opt seccomp=unconfined
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: cargo tarpaulin --verbose --doc --all-features --all-targets --engine llvm --out xml
       - uses: codecov/codecov-action@v4
