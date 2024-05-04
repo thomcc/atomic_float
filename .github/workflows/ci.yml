@@ -84,6 +84,5 @@ jobs:
       options: --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v3
-      - run: cargo +nightly tarpaulin --verbose --doc --all-features --workspace --timeout 120 --out xml
-      - uses: codecov/codecov-action@v2
-        with: { fail_ci_if_error: true }
+      - run: cargo +nightly tarpaulin --verbose --doc --all-features --all-targets --out xml
+      - uses: codecov/codecov-action@v4
