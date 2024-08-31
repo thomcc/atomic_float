@@ -12,7 +12,7 @@ use core::sync::atomic::{
 /// See the module documentation for [core::sync::atomic] for information about
 /// the portability of various atomics (this one is mostly as portable as
 /// [`AtomicU64`](core::sync::atomic::AtomicU64), with the caveat that we
-/// additionally that the platform support 64-bit floats).
+/// additionally require that the platform support 64-bit floats).
 ///
 /// # Example
 ///
