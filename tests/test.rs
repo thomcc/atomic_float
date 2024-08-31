@@ -26,12 +26,7 @@ fn test_serde_f32() {
     );
 }
 
-#[cfg(all(
-    feature = "serde",
-    feature = "atomic_f64",
-    target_has_atomic = "64",
-    not(force_disable_atomic64),
-))]
+#[cfg(all(feature = "serde", target_has_atomic = "64"))]
 #[test]
 fn test_serde_f64() {
     serde_test::assert_tokens(

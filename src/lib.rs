@@ -24,20 +24,9 @@
 //! [`AtomicU32`]: core::sync::atomic::AtomicU32
 //! [`AtomicU64`]: core::sync::atomic::AtomicU64
 //!
-//! Not every architecture has 64-bit atomics. As a result [`AtomicF64`] is
-//! behind an on-by-default feature flag, called `atomic_f64`, and is explicitly
-//! disabled on platforms known not to have 64-bit atomics (32-bit MIPs and
-//! PowerPC targets).
-//!
-//! Because it's on-by-default, it's possible it will be enabled by accident. If
-//! you're the person compiling the end-result (invoking `cargo build`), and
-//! some crate has done this (e.g. you can't simply add
-//! `default-features=false`) to a `Cargo.toml` line, you can override feature
-//! selection and force-disable `AtomicF64` using the `force_disable_atomic64`
-//! cfg (that is, by adding `RUSTFLAGS="--cfg=force_disable_atomic64"`).
-//!
-//! Let me know if you have to do this though, and I'll make consideration for
-//! your target the way I have for MIPs and PowerPC.
+//! Some architectures do not support 64-bit atomics, so [`AtomicF64`] is not
+//! available on such architectures. Examples include 32-bit PowerPC, MIPS, and
+//! Arm M-Profile.
 //!
 //! # Potential Use Cases
 //!
@@ -81,18 +70,10 @@
 mod atomic_f32;
 pub use atomic_f32::AtomicF32;
 
-#[cfg(all(
-    feature = "atomic_f64",
-    target_has_atomic = "64",
-    not(force_disable_atomic64),
-))]
+#[cfg(target_has_atomic = "64")]
 mod atomic_f64;
 
-#[cfg(all(
-    feature = "atomic_f64",
-    target_has_atomic = "64",
-    not(force_disable_atomic64),
-))]
+#[cfg(target_has_atomic = "64")]
 pub use atomic_f64::AtomicF64;
 
 use core::sync::atomic::Ordering;
