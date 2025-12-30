@@ -817,3 +817,60 @@ impl PartialEq for AtomicF32 {
         self.load(Relaxed) == o.load(Relaxed)
     }
 }
+#[cfg(feature = "atomic-traits")]
+impl atomic_traits::Atomic for AtomicF32 {
+    type Type = f32;
+
+    fn new(v: Self::Type) -> Self {
+        Self::new(v)
+    }
+
+    fn get_mut(&mut self) -> &mut Self::Type {
+        self.get_mut()
+    }
+
+    fn into_inner(self) -> Self::Type {
+        self.into_inner()
+    }
+
+    fn load(&self, order: Ordering) -> Self::Type {
+        self.load(order)
+    }
+
+    fn store(&self, val: Self::Type, order: Ordering) {
+        self.store(val, order)
+    }
+
+    fn swap(&self, val: Self::Type, order: Ordering) -> Self::Type {
+        self.swap(val, order)
+    }
+
+    fn compare_and_swap(
+        &self,
+        current: Self::Type,
+        new: Self::Type,
+        order: Ordering,
+    ) -> Self::Type {
+        self.compare_and_swap(current, new, order)
+    }
+
+    fn compare_exchange(
+        &self,
+        current: Self::Type,
+        new: Self::Type,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<Self::Type, Self::Type> {
+        self.compare_exchange(current, new, success, failure)
+    }
+
+    fn compare_exchange_weak(
+        &self,
+        current: Self::Type,
+        new: Self::Type,
+        success: Ordering,
+        failure: Ordering,
+    ) -> Result<Self::Type, Self::Type> {
+        self.compare_exchange_weak(current, new, success, failure)
+    }
+}

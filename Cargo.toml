@@ -19,6 +19,7 @@ atomic_f64 = []
 
 [dependencies]
 serde = { version = "1", optional = true, default-features = false }
+atomic-traits = { version = "0.4", optional = true }
 
 [dev-dependencies]
 serde_test = { version = "1", default-features = false }
